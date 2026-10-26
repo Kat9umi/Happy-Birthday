@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Happy Birthday</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <h1 id="heading"></h1>
+
+  <main class="scene" id="scene">
+    <div class="book" id="book">
+      <div class="shadow shadow-l"></div>
+      <div class="shadow shadow-r"></div>
+      <div class="board-r"></div>
+      <div class="block"></div>
+      <div class="ribbon"></div>
+      <!-- the pages ("leaves") are added here by script.js -->
+    </div>
+  </main>
+
+  <div class="below">
+    <p class="hint" id="coverHint"></p>
+    <nav class="controls" id="controls" aria-label="Page controls">
+      <button id="prev" aria-label="Previous pages">&#8249;</button>
+      <span id="counter" aria-live="polite"></span>
+      <button id="next" aria-label="Next pages">&#8250;</button>
+    </nav>
+  </div>
+
+  <button id="sound" class="pill" aria-pressed="false">&#9834; Sound on</button>
+  <audio id="music" loop preload="none"></audio>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="tx-title" hidden>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span id="tx-title"></span>
+        <button id="txClose" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="terminal-body" id="txBody"></div>
+    </div>
+  </div>
+
+  <script src="messages.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

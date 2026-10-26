@@ -1,0 +1,301 @@
+/* ==========================================================
+   COLOURS  (your palette)  - change a value here to recolour everything
+   ========================================================== */
+:root {
+  --ice:      #CAF6FE;
+  --sky:      #91C1E7;
+  --navy:     #171D3E;
+  --night:    #141325;
+  --night-2:  #2C2E47;
+  --slate:    #3C3F56;
+  --slate-2:  #565A74;
+  --mist:     #BDBED3;
+  --haze:     #898BA4;
+  --paper:    #F5EFF0;
+  --rose:     #D3B8C1;
+  --wine:     #64414A;
+  --mauve:    #8F778F;
+
+  --paper-edge: #D8D2E0;     /* page corners */
+  --ink: var(--night);       /* text on the pages */
+  --heading: var(--wine);    /* page titles */
+  --metal: #BDBED3;          /* set by messages.js (silver / gold) */
+  --metal-soft: color-mix(in srgb, var(--metal) 45%, transparent);
+  --star-rgb: 202, 246, 254; /* twinkling background stars */
+
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --display: "Cinzel", "Cormorant Garamond", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* page size: a page is 3:4. Two pages side by side. */
+  --h: min(74vh, 900px);
+  --pw: min(calc(var(--h) * .75), 46vw);
+  --flip: 1600ms;                          /* set from messages.js */
+  --ease: cubic-bezier(.45, .05, .2, 1);
+
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .34  0 0 0 0 .42  0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --leather-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* phones held upright: show one page at a time, big enough to read */
+@media (max-width: 760px) and (orientation: portrait) {
+  :root { --h: min(72vh, 900px); --pw: min(calc(var(--h) * .75), 88vw); }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: radial-gradient(ellipse at 50% 35%, var(--night-2), var(--night) 72%);
+  color: #fff; font-family: var(--serif);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 10px 14px 14px; overflow: hidden;
+}
+canvas#stars, canvas#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+canvas#stars { z-index: 0; }
+canvas#confetti { z-index: 20; }
+
+#heading {
+  position: relative; z-index: 1; margin: 0; text-align: center;
+  font-family: var(--display); font-weight: 500; letter-spacing: .06em;
+  font-size: clamp(1.1rem, 3.4vw, 1.9rem);
+  background: linear-gradient(100deg, var(--mauve), var(--paper) 40%, var(--mist) 60%, var(--ice));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shimmer 8s linear infinite;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ================= The book ================= */
+.scene {
+  position: relative; z-index: 1; flex: none;
+  width: calc(var(--pw) * 2); height: calc(var(--pw) * 4 / 3);
+  perspective: 3000px;
+}
+body:not(.opened) .scene { animation: float 6s ease-in-out infinite; }
+@keyframes float { 50% { translate: 0 -6px; } }
+
+.book {
+  position: absolute; inset: 0; transform-style: preserve-3d;
+  transition: transform var(--flip) var(--ease);
+}
+/* closed: the cover sits in the middle of the screen.  open: both pages are visible. */
+.book.pos-closed { transform: translateX(-25%); }
+.book.pos-center { transform: translateX(0); }
+.book.pos-left   { transform: translateX(25%); }   /* phone: showing the left page  */
+.book.pos-right  { transform: translateX(-25%); }  /* phone: showing the right page */
+
+/* shadow on the table */
+.shadow {
+  position: absolute; bottom: -3.5%; height: 7%; width: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.7), transparent 70%);
+  filter: blur(9px); transform: translateZ(-4px);
+  transition: opacity var(--flip) var(--ease);
+}
+.shadow-r { left: 51%; }
+.shadow-l { left: -1%; opacity: 0; }
+.book.open .shadow-l { opacity: 1; }
+
+/* back board (hard cover thickness, right side) */
+.board-r {
+  position: absolute; left: 50%; top: 0; width: 50%; height: 100%;
+  transform: translateZ(-2px);
+  background: var(--leather-grain), linear-gradient(90deg, #0d0c1b, var(--night) 6%, var(--navy) 60%, var(--night-2));
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 2px 0 #0b0a17, 0 6px 0 #09081280, 0 24px 50px rgba(0,0,0,.6);
+}
+/* stack of page edges you can see on the right */
+.block {
+  position: absolute; left: 50%; top: 1.6%; width: 49.3%; height: 96.8%;
+  transform: translateZ(-1px);
+  border-radius: 0 8px 8px 0;
+  background: repeating-linear-gradient(90deg, #ece7ef 0 1px, #bdbed3 1px 2px), #d5d2e0;
+}
+.ribbon {
+  position: absolute; left: 76%; bottom: -5%; width: 1.8%; height: 8%;
+  transform: translateZ(-1.5px);
+  background: linear-gradient(90deg, #4c2f37, #8a5a68 50%, #4c2f37);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  box-shadow: 0 3px 4px rgba(0,0,0,.4);
+}
+
+/* ---------- One leaf = one sheet of paper with a front and a back ---------- */
+.leaf {
+  position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+  transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform;
+}
+.face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  container-type: inline-size;       /* so "cqw" sizes follow the page width */
+}
+.face.back { transform: rotateY(180deg); }
+
+/* ---------- Cover (front of the first leaf) ---------- */
+.cover {
+  background:
+    var(--leather-grain),
+    linear-gradient(90deg, rgba(0,0,0,.6) 0, rgba(0,0,0,.05) 3.5%, rgba(255,255,255,.12) 4.2%, rgba(0,0,0,.4) 5.4%, transparent 9%),
+    radial-gradient(ellipse at 30% 18%, var(--night-2), var(--navy) 52%, var(--night));
+  border-radius: 5px 12px 12px 5px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), inset -6px 0 12px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.55), 0 24px 60px rgba(0,0,0,.6);
+  cursor: pointer; transition: filter .4s ease;
+}
+.book.pos-closed .cover:hover { filter: brightness(1.14); }
+.cover:focus-visible { outline: 2px solid var(--metal); outline-offset: 5px; }
+.cover-frame {
+  position: absolute; inset: 4.5% 5% 4.5% 11%;
+  border: 1.5px solid var(--metal-soft); border-radius: 3px 8px 8px 3px;
+  padding: 3.2% 3.4%; overflow: hidden;
+}
+.cover-frame::after {      /* thin second line just inside the frame */
+  content: ""; position: absolute; inset: 5px; border: 1px solid var(--metal-soft);
+  border-radius: 2px 6px 6px 2px; opacity: .55; pointer-events: none;
+}
+.cover-art {
+  display: block; width: 100%; height: 100%; object-fit: contain;
+  user-select: none; -webkit-user-drag: none; pointer-events: none;
+  animation: glint 7s ease-in-out infinite alternate;
+}
+@keyframes glint { from { filter: brightness(.9); } to { filter: brightness(1.2); } }
+body.opened .cover-art { animation: none; }
+
+/* inside of the cover: the board the first page is glued to */
+.board-in {
+  background:
+    var(--leather-grain),
+    linear-gradient(270deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.05) 3.5%, transparent 9%),
+    radial-gradient(ellipse at 70% 18%, var(--night-2), var(--navy) 55%, var(--night));
+  border-radius: 12px 5px 5px 12px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 24px 50px rgba(0,0,0,.5);
+}
+
+/* ---------- Paper ---------- */
+.paper { position: absolute; color: var(--ink); }
+.paper.right {
+  inset: 1.6% 2.6% 1.6% 0; border-radius: 0 8px 8px 0;
+  background:
+    linear-gradient(90deg, rgba(20,19,37,.32) 0, rgba(20,19,37,.11) 2.5%, rgba(255,255,255,.4) 4%, rgba(20,19,37,0) 9%),
+    linear-gradient(270deg, rgba(20,19,37,.11), transparent 4%),
+    var(--paper-grain),
+    radial-gradient(ellipse at 60% 28%, #fff, var(--paper) 62%, var(--paper-edge));
+  box-shadow: 1px 0 0 rgba(0,0,0,.12);
+}
+.paper.left {
+  inset: 1.6% 0 1.6% 2.6%; border-radius: 8px 0 0 8px;
+  background:
+    linear-gradient(270deg, rgba(20,19,37,.32) 0, rgba(20,19,37,.11) 2.5%, rgba(255,255,255,.4) 4%, rgba(20,19,37,0) 9%),
+    linear-gradient(90deg, rgba(20,19,37,.11), transparent 4%),
+    var(--paper-grain),
+    radial-gradient(ellipse at 40% 28%, #fff, var(--paper) 62%, var(--paper-edge));
+  box-shadow: -1px 0 0 rgba(0,0,0,.12);
+}
+.paper::before {            /* soft light sweep while a page turns */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5; opacity: 0;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 15%, rgba(255,255,255,.55) 48%, rgba(255,255,255,0) 78%);
+}
+.paper.left::before { background: linear-gradient(260deg, rgba(255,255,255,0) 15%, rgba(255,255,255,.55) 48%, rgba(255,255,255,0) 78%); }
+.leaf.turning .paper::before { animation: sheen var(--flip) ease-in-out; }
+@keyframes sheen { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+.page-inner {
+  height: 100%; padding: 9% 10% 12% 15%; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center; gap: 3cqw; overflow-y: auto;
+  scrollbar-width: none;
+}
+.paper.left .page-inner { padding: 9% 15% 12% 10%; }
+.page-inner::-webkit-scrollbar { display: none; }
+.paper h2 {
+  margin: 0; font-family: var(--display); font-weight: 500; letter-spacing: .05em;
+  font-size: 5.6cqw; color: var(--heading);
+}
+.paper .rule { width: 14cqw; height: 1px; background: var(--mauve); border: 0; margin: 0; }
+.paper .text { margin: 0; font-size: 5.1cqw; line-height: 1.55; min-height: 3em; }
+.paper .folio {
+  position: absolute; bottom: 4.5%; left: 0; right: 0; text-align: center;
+  font-family: var(--display); font-size: 2.8cqw; color: var(--haze); letter-spacing: .2em;
+}
+.paper img.photo {
+  max-width: 62%; max-height: 34%; object-fit: cover; border: 6px solid #fff; border-bottom-width: 18px;
+  box-shadow: 0 6px 18px rgba(20,19,37,.28); transform: rotate(-2deg);
+}
+.paper .go { margin-top: 2cqw; color: var(--wine); border-color: var(--wine); background: rgba(100,65,74,.07); font-size: 4cqw; }
+.paper .go:hover { background: rgba(100,65,74,.16); }
+
+/* ---------- Stickers ---------- */
+.stickers { position: absolute; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; border-radius: inherit; }
+.sticker {
+  position: absolute; height: auto; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(0);
+  opacity: 0; transition: transform .7s cubic-bezier(.3,1.5,.5,1), opacity .3s ease;
+  filter: drop-shadow(0 2px 3px rgba(20,19,37,.3));
+}
+.stickers.outline .sticker {
+  filter:
+    drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff)
+    drop-shadow(0 3px 4px rgba(20,19,37,.32));
+}
+.stickers.in .sticker { transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(1); opacity: 1; }
+.stickers.in .sticker:nth-child(2) { transition-delay: .25s; }
+.stickers.in .sticker:nth-child(3) { transition-delay: .5s; }
+
+/* typewriter letters */
+.ch { opacity: 0; }
+.ch.on { opacity: 1; }
+.ch.cur { border-right: 2px solid currentColor; margin-right: -2px; animation: blink .7s steps(1) infinite; }
+@keyframes blink { 50% { border-right-color: transparent; } }
+.w { display: inline-block; }
+
+/* ---------- Under the book: hint + page buttons ---------- */
+.below { position: relative; z-index: 1; display: grid; place-items: center; min-height: 46px; }
+.below > * { grid-area: 1 / 1; }
+.hint {
+  margin: 0; color: var(--mist); font-style: italic; font-size: 1.1rem;
+  animation: pulse 2.6s ease-in-out infinite; transition: opacity .6s ease;
+}
+body.opened .hint { opacity: 0; animation: none; pointer-events: none; }
+@keyframes pulse { 50% { opacity: .4; } }
+.controls {
+  display: flex; align-items: center; gap: 18px;
+  opacity: 0; transform: translateY(8px); pointer-events: none;
+  transition: opacity .6s ease .6s, transform .6s ease .6s;
+}
+.controls.show { opacity: 1; transform: none; pointer-events: auto; }
+#counter { font-family: var(--display); letter-spacing: .16em; color: var(--mist); min-width: 8ch; text-align: center; }
+button {
+  font: inherit; cursor: pointer; color: var(--mist); background: rgba(189,190,211,.07);
+  border: 1px solid var(--metal-soft); border-radius: 999px; padding: 8px 18px;
+  transition: background .25s ease, transform .15s ease, opacity .25s ease;
+}
+button:hover:not(:disabled) { background: rgba(189,190,211,.2); }
+button:active:not(:disabled) { transform: scale(.95); }
+button:disabled { opacity: .3; cursor: default; }
+button:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+#prev, #next { width: 44px; height: 44px; padding: 0; font-size: 1.6rem; line-height: 1; }
+.pill { position: fixed; top: 14px; right: 14px; z-index: 30; font-size: .95rem; }
+
+/* ---------- Transmission window ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+  padding: 18px; background: rgba(20,19,37,.82); backdrop-filter: blur(4px);
+}
+.overlay[hidden] { display: none; }
+.overlay.show .terminal { animation: pop .5s cubic-bezier(.2,.9,.3,1.15); }
+@keyframes pop { from { opacity: 0; transform: scale(.94) translateY(14px); } }
+.terminal {
+  width: min(560px, 100%); background: var(--night); color: var(--ice); border: 1px solid var(--slate-2);
+  border-radius: 10px; box-shadow: 0 0 50px rgba(145,193,231,.2); overflow: hidden;
+}
+.terminal-bar {
+  display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;
+  background: var(--night-2); border-bottom: 1px solid var(--slate-2); font-family: var(--mono); font-size: .85rem;
+}
+.terminal-bar button { padding: 2px 10px; color: var(--ice); border-color: var(--slate-2); border-radius: 6px; }
+.terminal-body {
+  padding: 20px; font-family: var(--mono); font-size: clamp(.9rem, 3.4vw, 1.02rem); line-height: 1.7;
+  min-height: 200px; max-height: 60vh; overflow-y: auto;
+}
+.terminal-body p { margin: 0 0 12px; }
+.terminal-body .ch.cur { border-right-width: 8px; margin-right: -8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
+}
